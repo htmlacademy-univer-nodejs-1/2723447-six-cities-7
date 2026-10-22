@@ -12,6 +12,23 @@ npm install
 
 ### Сценарии
 
+#### Запустить тестовый JSON-server
+
+```bash
+npm run mock:server
+```
+
+Запускает JSON API на `http://localhost:3000/offers` из `mocks/mock-server-data.json`.
+
+#### Запустить CLI
+
+```bash
+npm run cli -- --help
+```
+
+CLI поддерживает `--help`, `--version`, `--import <file.tsv>` и `--generate <n> <file.tsv> <url>`.
+
+
 В `package.json` предопределено несколько сценариев.
 
 #### Скомпилировать проект

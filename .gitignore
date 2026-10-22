@@ -9,3 +9,7 @@
 .DS_Store
 coverage
 *.log
+
+# Generated TSV fixtures (keep the two hand-written examples)
+/mocks/*.tsv
+!/mocks/offers.tsv
