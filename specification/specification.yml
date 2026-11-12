@@ -1,0 +1,838 @@
+openapi: 3.0.3
+info:
+  title: Шесть городов — REST API
+  version: 1.0.0
+  description: Спецификация REST API сервиса аренды жилья. Основана на разделах 3 «Сущности» и 5 «Список ресурсов»
+    ТЗ. Контракты описаны до реализации обработчиков. Имена маршрутов выбраны в рамках свободы ТЗ.
+servers:
+- url: http://localhost:4000
+  description: Локальный сервер разработки (пример; адрес настраивается через окружение).
+tags:
+- name: Пользователи
+  description: Регистрация и профиль.
+- name: Авторизация
+  description: Вход, проверка токена, завершение сессии.
+- name: Предложения
+  description: Предложения аренды.
+- name: Комментарии
+  description: Комментарии к предложению.
+- name: Премиальные предложения
+  description: Топ-3 премиальных предложений города.
+- name: Избранное
+  description: Избранное авторизованного пользователя.
+paths:
+  /users:
+    post:
+      tags:
+      - Пользователи
+      summary: Регистрация пользователя
+      operationId: createUser
+      description: Регистрация доступна только анонимным клиентам; email уникален. Пароль в ответе отсутствует.
+      requestBody:
+        required: true
+        description: Данные запроса
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreate'
+      responses:
+        '201':
+          description: Пользователь создан.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /auth/login:
+    post:
+      tags:
+      - Авторизация
+      summary: Вход пользователя
+      operationId: login
+      requestBody:
+        required: true
+        description: Данные запроса
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Вход выполнен, получен токен.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /auth/check:
+    get:
+      tags:
+      - Авторизация
+      summary: Проверка состояния авторизации
+      operationId: checkAuth
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Токен действителен; возвращён публичный профиль.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /auth/logout:
+    post:
+      tags:
+      - Авторизация
+      summary: Завершение сеанса
+      operationId: logout
+      description: Применяется, только если сервер поддерживает сессии или отзыв токенов. Для полностью stateless
+        JWT без списка отзыва такой ресурс не обязателен по ТЗ.
+      security:
+      - bearerAuth: []
+      responses:
+        '204':
+          description: Сеанс завершён.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /offers:
+    get:
+      tags:
+      - Предложения
+      summary: Список предложений
+      operationId: listOffers
+      description: Доступно без авторизации. По умолчанию не более 60 предложений; limit позволяет запросить больше.
+      parameters:
+      - $ref: '#/components/parameters/limit'
+      responses:
+        '200':
+          description: Предложения, отсортированные по postDate по убыванию.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OfferPreview'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      tags:
+      - Предложения
+      summary: Создать предложение
+      operationId: createOffer
+      description: Автор определяется по токену пользователя, а не по полям запроса.
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        description: Данные запроса
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OfferCreate'
+      responses:
+        '201':
+          description: Предложение создано.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Offer'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /offers/{offerId}:
+    get:
+      tags:
+      - Предложения
+      summary: Детали предложения
+      operationId: getOffer
+      parameters:
+      - $ref: '#/components/parameters/offerId'
+      responses:
+        '200':
+          description: Полная карточка предложения; комментарии выдаются отдельным ресурсом.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Offer'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    patch:
+      tags:
+      - Предложения
+      summary: Изменить своё предложение
+      operationId: updateOffer
+      description: Редактировать может только автор предложения.
+      security:
+      - bearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/offerId'
+      requestBody:
+        required: true
+        description: Данные запроса
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OfferUpdate'
+      responses:
+        '200':
+          description: Предложение обновлено.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Offer'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    delete:
+      tags:
+      - Предложения
+      summary: Удалить своё предложение
+      operationId: deleteOffer
+      description: Удалить может только автор; все комментарии к удалённому предложению также удаляются.
+      security:
+      - bearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/offerId'
+      responses:
+        '204':
+          description: Предложение и связанные комментарии удалены.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /offers/{offerId}/comments:
+    get:
+      tags:
+      - Комментарии
+      summary: Последние комментарии к предложению
+      operationId: listOfferComments
+      parameters:
+      - $ref: '#/components/parameters/offerId'
+      responses:
+        '200':
+          description: Не более 50 комментариев по дате публикации по убыванию.
+          content:
+            application/json:
+              schema:
+                type: array
+                maxItems: 50
+                items:
+                  $ref: '#/components/schemas/Comment'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      tags:
+      - Комментарии
+      summary: Добавить комментарий
+      operationId: createOfferComment
+      description: Автор и дата комментария назначаются сервером. Редактирование и удаление комментариев не предусмотрены.
+      security:
+      - bearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/offerId'
+      requestBody:
+        required: true
+        description: Данные запроса
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentCreate'
+      responses:
+        '201':
+          description: Комментарий добавлен.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /cities/{city}/premium:
+    get:
+      tags:
+      - Премиальные предложения
+      summary: Премиальные предложения города
+      operationId: listPremiumOffers
+      parameters:
+      - $ref: '#/components/parameters/city'
+      responses:
+        '200':
+          description: Не более трёх премиальных предложений по дате публикации по убыванию.
+          content:
+            application/json:
+              schema:
+                type: array
+                maxItems: 3
+                items:
+                  $ref: '#/components/schemas/OfferPreview'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /favorites:
+    get:
+      tags:
+      - Избранное
+      summary: Список избранных предложений
+      operationId: listFavorites
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Все избранные предложения текущего пользователя.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OfferPreview'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /favorites/{offerId}:
+    put:
+      tags:
+      - Избранное
+      summary: Добавить предложение в избранное
+      operationId: addFavorite
+      description: 'Операция идемпотентна: повторное добавление не создаёт дубликат.'
+      security:
+      - bearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/offerId'
+      responses:
+        '200':
+          description: Предложение добавлено в избранное.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OfferPreview'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    delete:
+      tags:
+      - Избранное
+      summary: Удалить предложение из избранного
+      operationId: removeFavorite
+      description: Операция идемпотентна.
+      security:
+      - bearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/offerId'
+      responses:
+        '204':
+          description: Предложение удалено из избранного.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Токен возвращается при входе и передаётся в заголовке Authorization.
+  parameters:
+    offerId:
+      name: offerId
+      in: path
+      required: true
+      description: Идентификатор предложения.
+      schema:
+        type: string
+        example: 507f1f77bcf86cd799439013
+    city:
+      name: city
+      in: path
+      required: true
+      description: Один из шести городов.
+      schema:
+        $ref: '#/components/schemas/City'
+    limit:
+      name: limit
+      in: query
+      required: false
+      description: Количество предложений в общем списке. По умолчанию 60; можно запросить больше.
+      schema:
+        type: integer
+        minimum: 1
+        default: 60
+        example: 67
+  schemas:
+    City:
+      type: string
+      description: Город из шести поддерживаемых.
+      enum:
+      - Paris
+      - Cologne
+      - Brussels
+      - Amsterdam
+      - Hamburg
+      - Dusseldorf
+      example: Paris
+    Location:
+      type: object
+      required:
+      - latitude
+      - longitude
+      properties:
+        latitude:
+          type: number
+          description: Широта.
+          minimum: -90
+          maximum: 90
+          example: 48.85661
+        longitude:
+          type: number
+          description: Долгота.
+          minimum: -180
+          maximum: 180
+          example: 2.351499
+    User:
+      type: object
+      description: Публичный профиль пользователя; пароль никогда не возвращается.
+      required:
+      - id
+      - name
+      - email
+      - isPro
+      properties:
+        id:
+          type: string
+          description: Уникальный идентификатор пользователя.
+          example: 507f1f77bcf86cd799439011
+          readOnly: true
+        name: &id001
+          type: string
+          description: 'Имя пользователя: от 1 до 15 символов.'
+          minLength: 1
+          maxLength: 15
+          example: Albina
+        email: &id002
+          type: string
+          description: Уникальный адрес электронной почты.
+          format: email
+          example: albina@example.com
+        avatarUrl: &id003
+          type: string
+          description: Необязательное изображение в формате JPG/PNG; если не указано, возвращается аватар по умолчанию.
+          format: uri
+          example: https://example.com/avatar.png
+        isPro: &id004
+          type: boolean
+          description: true — пользователь pro, false — обычный пользователь.
+          example: false
+    UserCreate:
+      type: object
+      required:
+      - name
+      - email
+      - password
+      - isPro
+      properties:
+        name: *id001
+        email: *id002
+        avatarUrl: *id003
+        password:
+          type: string
+          description: Пароль от 6 до 12 символов; сервер сохраняет только хеш.
+          minLength: 6
+          maxLength: 12
+          writeOnly: true
+          example: example67!
+        isPro: *id004
+    LoginRequest:
+      type: object
+      required:
+      - email
+      - password
+      properties:
+        email: *id002
+        password:
+          type: string
+          format: password
+          writeOnly: true
+          example: example67!
+    TokenResponse:
+      type: object
+      required:
+      - token
+      properties:
+        token:
+          type: string
+          description: 'Токен для Authorization: Bearer <token>.'
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+    Offer:
+      type: object
+      required:
+      - id
+      - title
+      - description
+      - postDate
+      - city
+      - previewImage
+      - images
+      - isPremium
+      - isFavorite
+      - rating
+      - type
+      - bedrooms
+      - maxAdults
+      - price
+      - conveniences
+      - host
+      - location
+      - commentsCount
+      properties:
+        id:
+          type: string
+          description: Идентификатор предложения.
+          readOnly: true
+          example: 507f1f77bcf86cd799439013
+        title: &id005
+          type: string
+          description: Название предложения.
+          minLength: 10
+          maxLength: 100
+          example: Cozy apartment in Paris
+        description: &id006
+          type: string
+          description: Подробное описание.
+          minLength: 20
+          maxLength: 1024
+          example: Comfortable apartment near the city center.
+        postDate: &id007
+          type: string
+          description: Дата публикации, ISO 8601.
+          format: date-time
+          example: '2026-11-12T10:00:00.000Z'
+        city: &id008
+          $ref: '#/components/schemas/City'
+        previewImage: &id009
+          type: string
+          description: Ссылка на превью.
+          format: uri
+          example: https://example.com/preview.jpg
+        images: &id010
+          type: array
+          description: Ровно шесть изображений жилья.
+          minItems: 6
+          maxItems: 6
+          items:
+            type: string
+            format: uri
+          example:
+          - https://example.com/image-1.jpg
+          - https://example.com/image-2.jpg
+          - https://example.com/image-3.jpg
+          - https://example.com/image-4.jpg
+          - https://example.com/image-5.jpg
+          - https://example.com/image-6.jpg
+        isPremium: &id011
+          type: boolean
+          description: Премиальное предложение.
+          example: false
+        isFavorite: &id020
+          type: boolean
+          description: Добавлено ли предложение в избранное текущего пользователя. Для анонимного пользователя —
+            false.
+          example: false
+        rating: &id012
+          type: number
+          description: Рейтинг от 1 до 5, один знак после запятой.
+          minimum: 1
+          maximum: 5
+          multipleOf: 0.1
+          example: 4.7
+        type: &id013
+          type: string
+          description: Тип жилья.
+          enum:
+          - apartment
+          - house
+          - room
+          - hotel
+          example: apartment
+        bedrooms: &id014
+          type: integer
+          description: Количество комнат.
+          minimum: 1
+          maximum: 8
+          example: 2
+        maxAdults: &id015
+          type: integer
+          description: Количество гостей.
+          minimum: 1
+          maximum: 10
+          example: 4
+        price: &id016
+          type: integer
+          description: Стоимость аренды.
+          minimum: 100
+          maximum: 100000
+          example: 200
+        conveniences: &id017
+          type: array
+          description: Не менее одного удобства, только из допустимого списка.
+          minItems: 1
+          uniqueItems: true
+          items:
+            type: string
+            enum:
+            - Breakfast
+            - Air conditioning
+            - Laptop friendly workspace
+            - Baby seat
+            - Washer
+            - Towels
+            - Fridge
+          example:
+          - Washer
+          - Towels
+        host:
+          $ref: '#/components/schemas/User'
+        commentsCount: &id021
+          type: integer
+          description: Количество комментариев. Рассчитывается сервером.
+          minimum: 0
+          readOnly: true
+          example: 0
+        location: &id018
+          $ref: '#/components/schemas/Location'
+    OfferCreate:
+      type: object
+      description: При создании host определяется сервером из токена; isFavorite — состояние избранного конкретного
+        пользователя; commentsCount вычисляется автоматически.
+      required:
+      - title
+      - description
+      - postDate
+      - city
+      - previewImage
+      - images
+      - isPremium
+      - rating
+      - type
+      - bedrooms
+      - maxAdults
+      - price
+      - conveniences
+      - location
+      properties: &id019
+        title: *id005
+        description: *id006
+        postDate: *id007
+        city: *id008
+        previewImage: *id009
+        images: *id010
+        isPremium: *id011
+        rating: *id012
+        type: *id013
+        bedrooms: *id014
+        maxAdults: *id015
+        price: *id016
+        conveniences: *id017
+        location: *id018
+    OfferUpdate:
+      type: object
+      description: Частичное обновление собственных полей предложения; передавайте только изменяемые поля.
+      properties: *id019
+      minProperties: 1
+    OfferPreview:
+      type: object
+      required:
+      - price
+      - title
+      - type
+      - isFavorite
+      - postDate
+      - city
+      - previewImage
+      - isPremium
+      - rating
+      - commentsCount
+      properties:
+        price: *id016
+        title: *id005
+        type: *id013
+        isFavorite: *id020
+        postDate: *id007
+        city: *id008
+        previewImage: *id009
+        isPremium: *id011
+        rating: *id012
+        commentsCount: *id021
+    Comment:
+      type: object
+      required:
+      - id
+      - text
+      - postDate
+      - rating
+      - author
+      properties:
+        id:
+          type: string
+          readOnly: true
+          example: 507f1f77bcf86cd799439012
+        text: &id022
+          type: string
+          description: Текст комментария.
+          minLength: 5
+          maxLength: 1024
+          example: Very comfortable apartment!
+        postDate:
+          type: string
+          description: Дата публикации комментария. Устанавливается сервером.
+          format: date-time
+          readOnly: true
+          example: '2026-11-12T11:00:00.000Z'
+        rating: &id023
+          type: integer
+          description: Оценка от 1 до 5.
+          minimum: 1
+          maximum: 5
+          example: 5
+        author:
+          $ref: '#/components/schemas/User'
+    CommentCreate:
+      type: object
+      description: Дата публикации и автор устанавливаются сервером.
+      required:
+      - text
+      - rating
+      properties:
+        text: *id022
+        rating: *id023
+    Error:
+      type: object
+      required:
+      - message
+      properties:
+        message:
+          type: string
+          description: Описание ошибки.
+          example: Validation failed
+        details:
+          type: array
+          description: Ошибки отдельных полей (при наличии).
+          items:
+            type: object
+            required:
+            - field
+            - message
+            properties:
+              field:
+                type: string
+              message:
+                type: string
+  responses:
+    BadRequest:
+      description: Некорректные параметры запроса.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Необходим действительный токен авторизации.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: Недостаточно прав на эту операцию.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Ресурс не найден.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Conflict:
+      description: Конфликт данных (например, email уже существует).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    ValidationError:
+      description: Данные не прошли проверку ограничений.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalError:
+      description: Ошибка сервера.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

@@ -1,0 +1,124 @@
+{
+  "offers": [
+    {
+      "id": "1",
+      "title": "Beautiful apartment near the center",
+      "description": "Comfortable accommodation in Paris with everything you need for a relaxing and pleasant stay.",
+      "previewImage": "https://example.com/places/1/preview.jpg",
+      "images": [
+        "https://example.com/places/1/1.jpg",
+        "https://example.com/places/1/2.jpg",
+        "https://example.com/places/1/3.jpg",
+        "https://example.com/places/1/4.jpg",
+        "https://example.com/places/1/5.jpg",
+        "https://example.com/places/1/6.jpg"
+      ],
+      "host": {
+        "name": "Host1",
+        "email": "host1@example.com",
+        "avatarUrl": "https://example.com/avatar/1.png",
+        "isPro": false
+      }
+    },
+    {
+      "id": "2",
+      "title": "Bright loft with a quiet balcony",
+      "description": "Comfortable accommodation in Amsterdam with everything you need for a relaxing and pleasant stay.",
+      "previewImage": "https://example.com/places/2/preview.jpg",
+      "images": [
+        "https://example.com/places/2/1.jpg",
+        "https://example.com/places/2/2.jpg",
+        "https://example.com/places/2/3.jpg",
+        "https://example.com/places/2/4.jpg",
+        "https://example.com/places/2/5.jpg",
+        "https://example.com/places/2/6.jpg"
+      ],
+      "host": {
+        "name": "Host2",
+        "email": "host2@example.com",
+        "avatarUrl": "https://example.com/avatar/2.png",
+        "isPro": true
+      }
+    },
+    {
+      "id": "3",
+      "title": "Cozy house with city garden",
+      "description": "Comfortable accommodation in Cologne with everything you need for a relaxing and pleasant stay.",
+      "previewImage": "https://example.com/places/3/preview.jpg",
+      "images": [
+        "https://example.com/places/3/1.jpg",
+        "https://example.com/places/3/2.jpg",
+        "https://example.com/places/3/3.jpg",
+        "https://example.com/places/3/4.jpg",
+        "https://example.com/places/3/5.jpg",
+        "https://example.com/places/3/6.jpg"
+      ],
+      "host": {
+        "name": "Host3",
+        "email": "host3@example.com",
+        "avatarUrl": "https://example.com/avatar/3.png",
+        "isPro": false
+      }
+    },
+    {
+      "id": "4",
+      "title": "Modern studio by the old town",
+      "description": "Comfortable accommodation in Brussels with everything you need for a relaxing and pleasant stay.",
+      "previewImage": "https://example.com/places/4/preview.jpg",
+      "images": [
+        "https://example.com/places/4/1.jpg",
+        "https://example.com/places/4/2.jpg",
+        "https://example.com/places/4/3.jpg",
+        "https://example.com/places/4/4.jpg",
+        "https://example.com/places/4/5.jpg",
+        "https://example.com/places/4/6.jpg"
+      ],
+      "host": {
+        "name": "Host4",
+        "email": "host4@example.com",
+        "avatarUrl": "https://example.com/avatar/4.png",
+        "isPro": true
+      }
+    },
+    {
+      "id": "5",
+      "title": "Spacious family friendly apartment",
+      "description": "Comfortable accommodation in Hamburg with everything you need for a relaxing and pleasant stay.",
+      "previewImage": "https://example.com/places/5/preview.jpg",
+      "images": [
+        "https://example.com/places/5/1.jpg",
+        "https://example.com/places/5/2.jpg",
+        "https://example.com/places/5/3.jpg",
+        "https://example.com/places/5/4.jpg",
+        "https://example.com/places/5/5.jpg",
+        "https://example.com/places/5/6.jpg"
+      ],
+      "host": {
+        "name": "Host5",
+        "email": "host5@example.com",
+        "avatarUrl": "https://example.com/avatar/5.png",
+        "isPro": false
+      }
+    },
+    {
+      "id": "6",
+      "title": "Comfortable private city room",
+      "description": "Comfortable accommodation in Dusseldorf with everything you need for a relaxing and pleasant stay.",
+      "previewImage": "https://example.com/places/6/preview.jpg",
+      "images": [
+        "https://example.com/places/6/1.jpg",
+        "https://example.com/places/6/2.jpg",
+        "https://example.com/places/6/3.jpg",
+        "https://example.com/places/6/4.jpg",
+        "https://example.com/places/6/5.jpg",
+        "https://example.com/places/6/6.jpg"
+      ],
+      "host": {
+        "name": "Host6",
+        "email": "host6@example.com",
+        "avatarUrl": "https://example.com/avatar/6.png",
+        "isPro": true
+      }
+    }
+  ]
+}
