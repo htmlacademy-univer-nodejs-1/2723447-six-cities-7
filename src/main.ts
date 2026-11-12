@@ -130,22 +130,22 @@ function serializeOffer(mock: MockOffer): string {
   };
   const [latitude, longitude] = coords[city];
   const chosen = [...new Set(Array.from({length: randomInt(1, 7)}, () => randomItem(conveniences)))];
-  return `${[
+  return [
     mock.title, mock.description, new Date().toISOString(), city,
     mock.previewImage, mock.images.join(';'), String(Math.random() < 0.3),
     'false', (randomInt(10, 50) / 10).toFixed(1), randomItem(housingTypes),
     randomInt(1, 8), randomInt(1, 10), randomInt(100, 100000), chosen.join(';'),
     mock.host.name, mock.host.email, mock.host.avatarUrl ?? '', String(mock.host.isPro),
     latitude, longitude
-  ].join('\t') }\n`;
+  ].join('\t').concat('\n');
 }
 
 function validateMockOffer(value: MockOffer): void {
   if (!value || typeof value.title !== 'string' || value.title.length < 10 || value.title.length > 100 ||
-    typeof value.description !== 'string' || value.description.length < 20 || value.description.length > 1024 ||
-    typeof value.previewImage !== 'string' || !Array.isArray(value.images) || value.images.length !== 6 ||
-    !value.host || typeof value.host.name !== 'string' || typeof value.host.email !== 'string' ||
-    typeof value.host.isPro !== 'boolean') {
+      typeof value.description !== 'string' || value.description.length < 20 || value.description.length > 1024 ||
+      typeof value.previewImage !== 'string' || !Array.isArray(value.images) || value.images.length !== 6 ||
+      !value.host || typeof value.host.name !== 'string' || typeof value.host.email !== 'string' ||
+      typeof value.host.isPro !== 'boolean') {
     throw new Error('JSON-server вернул некорректный шаблон предложения');
   }
   const values = [value.title, value.description, value.previewImage, ...value.images,

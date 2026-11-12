@@ -8,14 +8,14 @@ const offerSchema = new Schema({
   previewImage: {type: String, required: true},
   images: {type: [String], required: true},
   isPremium: {type: Boolean, required: true},
-  isFavorite: {type: Boolean, required: true},
-  rating: {type: Number, required: true},
+  rating: {type: Number, default: 0},
   type: {type: String, required: true},
   bedrooms: {type: Number, required: true},
   maxAdults: {type: Number, required: true},
   price: {type: Number, required: true},
   conveniences: {type: [String], required: true},
   host: {type: Schema.Types.ObjectId, ref: 'User', required: true},
+  commentsCount: {type: Number, default: 0},
   location: {
     latitude: {type: Number, required: true},
     longitude: {type: Number, required: true}
