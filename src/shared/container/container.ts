@@ -1,0 +1,42 @@
+import {Container} from 'inversify';
+import {Application} from '../../app/application.js';
+import type {LoggerInterface} from '../libs/logger/logger.interface.js';
+import {LoggerService} from '../libs/logger/logger.service.js';
+import type {ConfigInterface} from '../libs/config/config.interface.js';
+import {ConfigService} from '../libs/config/config.service.js';
+import {Component} from './types.js';
+import {DatabaseService} from '../libs/database/database.service.js';
+import {UserModel} from '../../modules/user/user.model.js';
+import {OfferModel} from '../../modules/offer/offer.model.js';
+import {CommentModel} from '../../modules/comment/comment.model.js';
+import {FavoriteModel} from '../../modules/favorite/favorite.model.js';
+import {SessionModel} from '../../modules/session/session.model.js';
+import {UserService} from '../../modules/user/user.service.js';
+import {OfferService} from '../../modules/offer/offer.service.js';
+import {CommentService} from '../../modules/comment/comment.service.js';
+import {FavoriteService} from '../../modules/favorite/favorite.service.js';
+import {AuthService} from '../../modules/auth/auth.service.js';
+import type {UserServiceInterface} from '../../modules/user/user-service.interface.js';
+import type {OfferServiceInterface} from '../../modules/offer/offer-service.interface.js';
+import type {CommentServiceInterface} from '../../modules/comment/comment-service.interface.js';
+import type {FavoriteServiceInterface} from '../../modules/favorite/favorite-service.interface.js';
+import type {AuthServiceInterface} from '../../modules/auth/auth-service.interface.js';
+
+export function createContainer(): Container {
+  const container = new Container({defaultScope: 'Singleton'});
+  container.bind<LoggerInterface>(Component.Logger).to(LoggerService);
+  container.bind<ConfigInterface>(Component.Config).to(ConfigService);
+  container.bind<Application>(Component.Application).to(Application);
+  container.bind<DatabaseService>(Component.Database).to(DatabaseService);
+  container.bind(Component.UserModel).toConstantValue(UserModel);
+  container.bind(Component.OfferModel).toConstantValue(OfferModel);
+  container.bind(Component.CommentModel).toConstantValue(CommentModel);
+  container.bind(Component.FavoriteModel).toConstantValue(FavoriteModel);
+  container.bind(Component.SessionModel).toConstantValue(SessionModel);
+  container.bind<UserServiceInterface>(Component.UserService).to(UserService);
+  container.bind<OfferServiceInterface>(Component.OfferService).to(OfferService);
+  container.bind<CommentServiceInterface>(Component.CommentService).to(CommentService);
+  container.bind<FavoriteServiceInterface>(Component.FavoriteService).to(FavoriteService);
+  container.bind<AuthServiceInterface>(Component.AuthService).to(AuthService);
+  return container;
+}
